@@ -6,7 +6,7 @@
 
 extern const char **library_locations; // defined in android-dl.cpp
 
-#define METHOD_NAME(class, method) Java_android_1dl_##class##_##method
+#define METHOD_NAME(class, method) Java_com_github_zub2_android_1dl_##class##_##method
 
 jclass
 	g_cls_String,

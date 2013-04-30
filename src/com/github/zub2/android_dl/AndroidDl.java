@@ -1,4 +1,4 @@
-package android_dl;
+package com.github.zub2.android_dl;
 
 /**
  * Fixes Android by allowing loading of libraries and their dependencies.

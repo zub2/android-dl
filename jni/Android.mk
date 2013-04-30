@@ -7,7 +7,7 @@ LOCAL_SRC_FILES := \
 	android-dl.cpp \
 	jni.cpp \
 	common.cpp
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/inc
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../inc
 # Avoid libstdc++ dependency -- we only use C++ as "better C"
 LOCAL_CFLAGS += -W -Wall -nodefaultlibs -fno-rtti -fno-exceptions
 LOCAL_LDLIBS := -llog
