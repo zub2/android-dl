@@ -70,11 +70,11 @@ For more information about importing NDK modules, see docs/IMPORT-MODULE.html in
 
 1. Add android-dl to your project.properties:
 
-android.library.reference.1=/path/to/android-dl
+    android.library.reference.1=/path/to/android-dl
 
 (if a reference.1 is already defined, use the next free number)
 
-1. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
+2. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
 
 ## Step 3: Use from your Java code
 
