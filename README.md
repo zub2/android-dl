@@ -7,12 +7,17 @@ For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, y
 
     System.loadLibrary("gnustl_shared");
     System.loadLibrary("foo");
-	
+
 This is what the Android NDK recommends doing (see docs/CPLUSPLUS-SUPPORT.html) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
 (Same goes for performing `dlopen` from within native code.)
 
 Technically, this stems from the fact that your app's *lib/* directory (i.e. */data/data/com.company.foobar/lib/*) is not in the Dalvik process' *LD_LIBRARY_PATH* environment variable. Moreover, the environment variable is [only parsed at startup](https://groups.google.com/d/msg/android-ndk/m6OddFQINxs/sAQ34sFhJ7QJ) and there's no way to amend the list at runtime.
+
+License
+=======
+
+This library is licensed under either Mozilla Public License 1.1, or, at your choice, GNU General Public License Version 3 or later or GNU Lesser General Public License Version 3.
 
 History
 =======
@@ -63,7 +68,12 @@ For more information about importing NDK modules, see docs/IMPORT-MODULE.html in
 
 ## Step 2: Add Java bindings and initialize
 
-1. Copy *src/android-dl* to your *src/* directory.
+1. Add android-dl to your project.properties:
+
+android.library.reference.1=/path/to/android-dl
+
+(if a reference.1 is already defined, use the next free number)
+
 1. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
 
 ## Step 3: Use from your Java code
@@ -74,5 +84,5 @@ To load a JNI library, use `AndroidDl.loadLibrary(libName)` instead of `System.l
 
 When you wish to load shared libraries from within your native code:
 
-1. `#include <android-dl.h>`
+1. `#include "android-dl.h"`
 1. Use `android_dlopen(lib)` instead of `dlopen(lib)`.
