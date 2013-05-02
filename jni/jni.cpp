@@ -84,8 +84,8 @@ jboolean JNICALL METHOD_NAME(AndroidDl, setup)
 	}
 
 	int paths_num = env->GetArrayLength(ld_library_path);
-	
-	library_locations = (const char**)malloc((paths_num+2) * sizeof(char *));	
+
+	library_locations = (const char**)malloc((paths_num+2) * sizeof(char *));
 	if (library_locations == NULL)
 	{
 		env->ThrowNew(g_cls_RuntimeException, "Cannot allocate library locations.");

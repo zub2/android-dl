@@ -12,7 +12,7 @@ public class AndroidDl {
 	/**
 	 * Initializes the library loader.
 	 *
-	 * @param nativeLibraryDir the native library directory	 
+	 * @param nativeLibraryDir the native library directory
 	 */
 	public static boolean initialize(String nativeLibraryDir, String[] ldLibraryPath) {
 		System.loadLibrary("android-dl");

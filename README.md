@@ -2,7 +2,7 @@ Android Dynamic Library Loader
 ==============================
 
 This library works around Android's inability to resolve dependencies between your app's shared libraries (as opposed to dependency on system libraries such as *libc.so* and *liblog.so*).
-For example, if you load a JNI shared library that depends on another library shipped in your app's *lib/* directory, you'll get a `LinkageError` exception unless you manually preload the dependencies (by performing additional `System.loadLibrary` calls), 
+For example, if you load a JNI shared library that depends on another library shipped in your app's *lib/* directory, you'll get a `LinkageError` exception unless you manually preload the dependencies (by performing additional `System.loadLibrary` calls),
 For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, you have to explicitly perform:
 
     System.loadLibrary("gnustl_shared");

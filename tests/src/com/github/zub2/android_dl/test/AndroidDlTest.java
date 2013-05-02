@@ -15,7 +15,7 @@ public class AndroidDlTest extends AndroidTestCase
 	{
 		AndroidDl.initialize(getContext().getApplicationInfo().nativeLibraryDir);
 	}
-	
+
 	public void testLoadLibraryWithDependency()
 	{
 		AndroidDl.loadLibrary("test1");
