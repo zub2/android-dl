@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <pthread.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 
@@ -44,6 +45,9 @@
 
 #include "android-dl.h"
 #include "common.h"
+#include "lock.h"
+
+static pthread_mutex_t g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* The library paths. */
 const char **library_locations;
@@ -52,7 +56,7 @@ static char last_error[1024] = {0};
 
 extern "C" {
 
-void set_error(const char* format, ...)
+static void set_error(const char* format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -84,9 +88,8 @@ read_section(int fd,
     return result;
 }
 
-__attribute__ ((visibility("default")))
-char **
-android_dlneeds(const char *library)
+static char **
+android_dlneeds_unlocked(const char *library)
 {
     int i, fd;
     int n_needed;
@@ -232,8 +235,15 @@ android_dlneeds(const char *library)
 }
 
 __attribute__ ((visibility("default")))
-void *
-android_dlopen(const char *library)
+char **
+android_dlneeds(const char *library)
+{
+	ScopedLock l(g_mutex);
+	return android_dlneeds_unlocked(library);
+}
+
+static void *
+android_dlopen_unlocked(const char *library)
 {
     /*
      * We should *not* try to just dlopen() the bare library name
@@ -306,14 +316,14 @@ android_dlopen(const char *library)
         return NULL;
     }
 
-    needed = android_dlneeds(full_name);
+    needed = android_dlneeds_unlocked(full_name);
     if (needed == NULL) {
         free(full_name);
         return NULL;
     }
 
     for (i = 0; needed[i] != NULL; i++) {
-        if (android_dlopen(needed[i]) == NULL) {
+        if (android_dlopen_unlocked(needed[i]) == NULL) {
             free_ptrarray((void **) needed);
             free(full_name);
             return NULL;
@@ -340,6 +350,14 @@ android_dlopen(const char *library)
     loaded_libraries = new_loaded_lib;
 
     return p;
+}
+
+__attribute__ ((visibility("default")))
+void *
+android_dlopen(const char *library)
+{
+    ScopedLock l(g_mutex);
+    return android_dlopen_unlocked(library);
 }
 
 __attribute__ ((visibility("default")))
@@ -424,6 +442,7 @@ __attribute__ ((visibility("default")))
 const char *
 android_dl_get_last_error()
 {
+	ScopedLock l(g_mutex);
 	return last_error;
 }
 
