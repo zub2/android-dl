@@ -10,9 +10,11 @@ For example, if your JNI library *libfoo.so* links with *libgnustl_shared.so*, y
 
 This is what the Android NDK recommends doing (see docs/CPLUSPLUS-SUPPORT.html) and for merely a single dependency this isn't a big deal, but it can get unruly when you have a complicated codebase with a myriad of libraries.
 
-(Same goes for performing `dlopen` from within native code.)
+Same goes for performing `dlopen` from within native code.
 
 Technically, this stems from the fact that your app's *lib/* directory (i.e. */data/data/com.company.foobar/lib/*) is not in the Dalvik process' *LD_LIBRARY_PATH* environment variable. Moreover, the environment variable is [only parsed at startup](https://groups.google.com/d/msg/android-ndk/m6OddFQINxs/sAQ34sFhJ7QJ) and there's no way to amend the list at runtime.
+
+A future solution is contained in [Issue 34416](https://code.google.com/p/android/issues/detail?id=34416) but it has not been released at the time of writing. This means devices with Android <= 4.2.2 will not get the fix. If your application is to run on such devices you still need to deal with the issue yourself.
 
 License
 =======
@@ -28,61 +30,68 @@ This code originally comes from the LibreOffice *lo-bootstrap.c* file, with the 
 * A different namespace was reinstated.
 * Exception reporting was added.
 * Documentation.
+* Android project packaging.
+* Tests added.
 
 Usage
 =====
 
-## Step 1: Import the NDK module
+Android-dl is packaged as an Android library project. To use it you need to do the following steps:
 
-If the *android-dl* directory is in a global location (pointed to by the *NDK_MODULE_PATH* environment variable), this is what you should append to the end of your *jni/Android.mk* file:
+## Step 1: Reference the project from your *project.properties*
+
+Add the following to *project.properties* of your project:
 
 <pre>
-$(call import-module,android-dl)
+android.library.reference.1=path/to/android-dl
 </pre>
 
-Alternatively, you might choose to place it relative to your project.
-For example, if your directory layout is:
+Use the next available number if *android.library.reference.1* is already in use. Replace *path/to/android-dl* with wherever you placed android-dl. It can be a relative path.
 
-     workspace/
-       android-dl/
-       foobar/ <- your project
-	     jni/
-	       Android.mk
+## Step 2: Import the NDK module in your native project
 
-this is what you should append to your *jni/Android.mk* file:
+Append this to the *end* of your Android.mk:
 
-    $(call import-add-path,..)
-    $(call import-module,android-dl)
+<pre>
+$(call import-add-path, path/to/directory-containing-android-dl)
+$(call import-module, android-dl/jni)
+</pre>
+
+The import path can be specified as a relative path. Note that it *must* point to the *parent* directory of *android-dl*, it must not be the android-dl directory itself.
 
 In addition, add `android-dl` to your `LOCAL_SHARED_LIBRARIES`, e.g.:
+<pre>
+include $(CLEAR_VARS)
 
-    include $(CLEAR_VARS)
+LOCAL_MODULE := foo
+LOCAL_SRC_FILES := foo.c
+LOCAL_SHARED_LIBRARIES := bar baz android-dl
 
-    LOCAL_MODULE := foo
-    LOCAL_SRC_FILES := foo.c
-    LOCAL_SHARED_LIBRARIES := bar baz android-dl
-
-    include $(BUILD_SHARED_LIBRARY)
+include $(BUILD_SHARED_LIBRARY)
+</pre>
 
 For more information about importing NDK modules, see docs/IMPORT-MODULE.html in the Android NDK tree.
 
-## Step 2: Add Java bindings and initialize
+## Step 3: Initialize android-dl in your Java code
 
-1. Add android-dl to your project.properties:
+Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
 
-    android.library.reference.1=/path/to/android-dl
+## Step 4: Use android-dl from your Java code
 
-(if a reference.1 is already defined, use the next free number)
+To load a native library, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
 
-2. Within your main activity's `onCreate`, call `AndroidDl.initialize( getApplicationInfo().nativeLibraryDir )`.
+## Step 5: Use android-dl from your native code
 
-## Step 3: Use from your Java code
-
-To load a JNI library, use `AndroidDl.loadLibrary(libName)` instead of `System.loadLibrary(libName)`.
-
-## Step 4: Use from your native code
-
-When you wish to load shared libraries from within your native code:
+If you wish to load shared libraries from within your native code:
 
 1. `#include "android-dl.h"`
 1. Use `android_dlopen(lib)` instead of `dlopen(lib)`.
+
+For an example project using android-dl look at the test project (living in the `tests/` subdirectory).
+
+Notes
+====
+
+* If your project contains a native part (which is most often the case when you use android-dl) *do not build the native part of android-dl by ndk-build in the android-dl project itself*. It will be built automatically with the native code of your project. Only build it in the uncommon case your project doesn't have a native part. In that case skip steps 2 and 5 above.
+
+* android-dl should be *mostly* thread-safe. The exception is `android_dl_get_last_error()` where the last thread to run into an error wins.
